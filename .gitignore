@@ -1,1 +1,15 @@
 
+# python/django
+**/__pycache__/
+*.pyc
+*.pyo
+*.log
+*.sqlite3
+db.sqlite3
+
+# envs
+.venv/
+backend/.venv/
+
+# vscode
+.vscode/
