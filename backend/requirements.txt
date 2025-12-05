@@ -1,5 +1,9 @@
 asgiref==3.10.0
 Django==4.2.25
+django-cors-headers
 djangorestframework==3.16.1
+djangorestframework-simplejwt
+drf-spectacular
+psycopg2-binary
 sqlparse==0.5.3
 typing_extensions==4.15.0
