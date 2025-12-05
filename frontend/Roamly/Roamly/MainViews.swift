@@ -499,6 +499,23 @@ struct HomeView: View {
     @State private var selectedCategory: String = "Nature"
     private let categories = ["Nature", "Food", "Nightlife", "Culture"]
 
+    // 선택된 카테고리에 따라 보여줄 투어 목록
+    private func toursForCategory(_ category: String) -> [Tour] {
+        switch category {
+        case "Nature":
+            return sampleToursNearYou
+        case "Food":
+            return sampleTrendingTours
+        case "Nightlife":
+            return sampleExtremeTours
+        case "Culture":
+            // Culture는 두 리스트를 섞어서 보여주기
+            return sampleToursNearYou + sampleTrendingTours
+        default:
+            return sampleToursNearYou
+        }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -541,19 +558,21 @@ struct HomeView: View {
                     .padding(.horizontal, 16)
                 }
 
-                // Featured card
+                // Featured card - 선택한 카테고리 기준
                 VStack(alignment: .leading, spacing: 8) {
-                    TourCard(tour: sampleTrendingTours.first ?? sampleToursNearYou.first!, compact: false)
+                    if let featured = toursForCategory(selectedCategory).first {
+                        TourCard(tour: featured, compact: false)
+                    }
                 }
                 .padding(.horizontal, 16)
 
-                // Additional list
+                // Additional list - Recommended
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Recommended")
                         .font(.system(size: 18, weight: .semibold))
                         .padding(.horizontal, 16)
 
-                    ForEach(sampleToursNearYou) { tour in
+                    ForEach(toursForCategory(selectedCategory)) { tour in
                         NavigationLink {
                             GuideDetailView(tour: tour)
                         } label: {

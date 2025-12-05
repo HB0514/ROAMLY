@@ -226,19 +226,7 @@ struct LoginView: View {
 
     var body: some View {
         AuthScaffold(title: "Log In") {
-            HStack {
-                Spacer()
-                VStack(spacing: 8) {
-                    Image(systemName: "cloud.sun.fill")
-                        .font(.system(size: 40))
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.primaryBlue)
-                        .clipShape(Circle())
-                }
-                Spacer()
-            }
-            .padding(.bottom, 8)
+            Spacer().frame(height: 8)
 
             RoundedInputField(placeholder: "Email", text: $email, keyboardType: .emailAddress)
             RoundedInputField(placeholder: "Password", text: $password, isSecure: true)
@@ -246,7 +234,9 @@ struct LoginView: View {
             HStack {
                 Spacer()
                 Button("forgot password?") {
-                    infoMessage = AlertMessage(text: "Password reset is not connected yet.\nAsk the dev team to hook this up to your backend.")
+                    infoMessage = AlertMessage(
+                        text: "Password reset is not connected yet.\nAsk the dev team to hook this up to your backend."
+                    )
                 }
                 .font(.system(size: 11))
                 .foregroundColor(Color.primaryBlue)
@@ -275,7 +265,11 @@ struct LoginView: View {
             }
         }
         .alert(item: $infoMessage) { msg in
-            Alert(title: Text("Info"), message: Text(msg.text), dismissButton: .default(Text("OK")))
+            Alert(
+                title: Text("Info"),
+                message: Text(msg.text),
+                dismissButton: .default(Text("OK"))
+            )
         }
     }
 
