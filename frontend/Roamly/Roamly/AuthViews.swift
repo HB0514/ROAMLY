@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 extension Color {
     static let skyBlue = Color(red: 151/255, green: 200/255, blue: 255/255)
@@ -225,7 +226,6 @@ struct LoginView: View {
 
     var body: some View {
         AuthScaffold(title: "Log In") {
-            // Logo 영역 (간단 버전, 필요하면 이미지로 교체)
             HStack {
                 Spacer()
                 VStack(spacing: 8) {
@@ -282,29 +282,32 @@ struct LoginView: View {
     private func performLogin() async {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedEmail.isEmpty, !password.isEmpty else {
-            await MainActor {
+            await MainActor.run {
                 infoMessage = AlertMessage(text: "Email and password are required.")
             }
             return
         }
 
-        await MainActor { isLoading = true }
+        await MainActor.run { isLoading = true }
         do {
             let tokens = try await APIClient.shared.login(email: trimmedEmail, password: password)
-            await MainActor {
+            await MainActor.run {
                 appState.setSession(email: trimmedEmail, tokens: tokens, activate: true)
             }
         } catch {
-            await MainActor {
+            await MainActor.run {
                 let message = (error as? APIError)?.errorDescription ?? error.localizedDescription
                 infoMessage = AlertMessage(text: message)
             }
         }
-        await MainActor { isLoading = false }
+        await MainActor.run { isLoading = false }
     }
 }
 
 // MARK: - 2. SignUp View
+private enum SignUpRoute: Hashable {
+    case aboutYou
+}
 
 struct SignUpView: View {
     @EnvironmentObject var appState: AppState
@@ -313,11 +316,10 @@ struct SignUpView: View {
     @State private var confirmPassword = ""
     @State private var infoMessage: AlertMessage?
     @State private var isLoading = false
-    @State private var navigateNext = false
+    @State private var goAboutYou = false
 
     var body: some View {
         AuthScaffold(title: "Sign Up", showBack: true) {
-            NavigationLink("", destination: AboutYouView(), isActive: $navigateNext) { EmptyView() }
 
             RoundedInputField(placeholder: "Email", text: $email, keyboardType: .emailAddress)
             RoundedInputField(placeholder: "Password", text: $password, isSecure: true)
@@ -328,6 +330,10 @@ struct SignUpView: View {
             }
             .disabled(isLoading)
         }
+        .background(
+            NavigationLink(destination: AboutYouView(), isActive: $goAboutYou) { EmptyView() }
+                .hidden()
+        )
         .alert(item: $infoMessage) { msg in
             Alert(title: Text("Info"), message: Text(msg.text), dismissButton: .default(Text("OK")))
         }
@@ -336,29 +342,29 @@ struct SignUpView: View {
     private func performSignup() async {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedEmail.isEmpty, !password.isEmpty else {
-            await MainActor { infoMessage = AlertMessage(text: "Email and password are required.") }
+            await MainActor.run { infoMessage = AlertMessage(text: "Email and password are required.") }
             return
         }
         guard password == confirmPassword else {
-            await MainActor { infoMessage = AlertMessage(text: "Passwords do not match.") }
+            await MainActor.run { infoMessage = AlertMessage(text: "Passwords do not match.") }
             return
         }
 
-        await MainActor { isLoading = true }
+        await MainActor.run { isLoading = true }
         do {
             try await APIClient.shared.register(email: trimmedEmail, password: password)
             let tokens = try await APIClient.shared.login(email: trimmedEmail, password: password)
-            await MainActor {
+            await MainActor.run {
                 appState.setSession(email: trimmedEmail, tokens: tokens, activate: false)
-                navigateNext = true
+                goAboutYou = true
             }
         } catch {
-            await MainActor {
+            await MainActor.run {
                 let message = (error as? APIError)?.errorDescription ?? error.localizedDescription
                 infoMessage = AlertMessage(text: message)
             }
         }
-        await MainActor { isLoading = false }
+        await MainActor.run { isLoading = false }
     }
 }
 
@@ -388,7 +394,7 @@ struct AboutYouView: View {
 // MARK: - 4. Profile Picture View
 
 struct ProfilePictureView: View {
-    @State private var hasImage = false   // 실제 사진 기능은 나중에 구현
+    @State private var hasImage = false
     @State private var dummyImage = "LikeLion"
 
     var body: some View {
@@ -476,7 +482,6 @@ struct LanguagesView: View {
 
     var body: some View {
         AuthScaffold(title: "Languages you speak", showBack: true) {
-            // Search bar
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.gray)
@@ -514,7 +519,7 @@ struct LanguagesView: View {
 
             PrimaryButton(title: "Continue") {
                 print("Selected languages: \(selectedLanguages)")
-                appState.markLoggedIn()   // 온보딩 끝 → 메인 탭으로 이동
+                appState.markLoggedIn()
             }
             .padding(.top, 8)
         }
@@ -526,5 +531,6 @@ struct LanguagesView: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+            .environmentObject(AppState())
     }
 }

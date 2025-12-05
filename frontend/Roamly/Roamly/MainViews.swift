@@ -756,24 +756,24 @@ struct MessagesListView: View {
     }
 
     private func loadRooms(token: String) async {
-        await MainActor {
+        await MainActor.run {
             isLoading = true
             errorMessage = nil
         }
 
         do {
             let rooms = try await APIClient.shared.fetchChatRooms(accessToken: token)
-            await MainActor {
+            await MainActor.run {
                 chatRooms = rooms
             }
         } catch {
-            await MainActor {
+            await MainActor.run {
                 let message = (error as? APIError)?.errorDescription ?? error.localizedDescription
                 errorMessage = message
             }
         }
 
-        await MainActor { isLoading = false }
+        await MainActor.run { isLoading = false }
     }
 }
 
@@ -809,7 +809,7 @@ struct ChatView: View {
                         .padding(.top, 12)
                         .padding(.bottom, 8)
                     }
-                    .onChange(of: messages.count) { _ in
+                    .onChange(of: messages.count) { _, _ in
                         if let last = messages.last {
                             proxy.scrollTo(last.id, anchor: .bottom)
                         }
@@ -858,26 +858,26 @@ struct ChatView: View {
 
     private func loadMessages() async {
         guard let token = appState.accessToken else {
-            await MainActor { errorMessage = "Login required to load messages." }
+            await MainActor.run { errorMessage = "Login required to load messages." }
             return
         }
 
-        await MainActor {
+        await MainActor.run {
             isLoading = true
             errorMessage = nil
         }
 
         do {
             let fetched = try await APIClient.shared.fetchMessages(roomID: room.id, accessToken: token)
-            await MainActor { messages = fetched }
+            await MainActor.run { messages = fetched }
         } catch {
-            await MainActor {
+            await MainActor.run {
                 let message = (error as? APIError)?.errorDescription ?? error.localizedDescription
                 errorMessage = message
             }
         }
 
-        await MainActor { isLoading = false }
+        await MainActor.run { isLoading = false }
     }
 
     private func sendMessage() {
@@ -889,7 +889,7 @@ struct ChatView: View {
         }
 
         Task {
-            await MainActor {
+            await MainActor.run {
                 isSending = true
                 errorMessage = nil
             }
@@ -900,18 +900,18 @@ struct ChatView: View {
                     content: trimmed,
                     accessToken: token
                 )
-                await MainActor {
+                await MainActor.run {
                     messages.append(newMessage)
                     draft = ""
                 }
             } catch {
-                await MainActor {
+                await MainActor.run {
                     let message = (error as? APIError)?.errorDescription ?? error.localizedDescription
                     errorMessage = message
                 }
             }
 
-            await MainActor { isSending = false }
+            await MainActor.run { isSending = false }
         }
     }
 }
@@ -929,14 +929,14 @@ struct ChatBubble: View {
                     .background(Color.primaryBlue)
                     .foregroundColor(.white)
                     .cornerRadius(16)
-                    .frame(maxWidth: UIScreen.main.bounds.width * 0.7, alignment: .trailing)
+                    .frame(maxWidth: 280, alignment: .trailing)
             } else {
                 Text(message.content)
                     .padding(10)
                     .background(Color.gray.opacity(0.15))
                     .foregroundColor(.black)
                     .cornerRadius(16)
-                    .frame(maxWidth: UIScreen.main.bounds.width * 0.7, alignment: .leading)
+                    .frame(maxWidth: 280, alignment: .leading)
                 Spacer()
             }
         }

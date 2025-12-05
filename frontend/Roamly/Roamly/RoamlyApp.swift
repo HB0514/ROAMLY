@@ -6,7 +6,7 @@ struct RoamlyApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainTabView()      // ✅ 여기!
                 .environmentObject(appState)
         }
     }

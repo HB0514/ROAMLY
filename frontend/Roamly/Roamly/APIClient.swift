@@ -3,7 +3,8 @@ import Foundation
 struct APIConfig {
     /// Change this to your running Django server host/port.
     /// Use http://127.0.0.1:8000 for simulator, or your machine IP for a physical device.
-    static let baseURL = URL(string: "http://127.0.0.1:8000/api")!
+    /// Note: keep this as the host root. We enforce the `/api/` prefix below.
+    static let baseURL = URL(string: "http://127.0.0.1:8000")!
 }
 
 enum APIError: LocalizedError {
@@ -108,7 +109,12 @@ final class APIClient {
         body: Encodable? = nil,
         accessToken: String? = nil
     ) throws -> URLRequest {
-        guard let url = URL(string: path, relativeTo: APIConfig.baseURL) else {
+        // Ensure we always hit the /api/ prefix even if the base URL is just the host.
+        var cleaned = path
+        if cleaned.hasPrefix("/") { cleaned.removeFirst() }
+        if !cleaned.hasPrefix("api/") { cleaned = "api/" + cleaned }
+
+        guard let url = URL(string: cleaned, relativeTo: APIConfig.baseURL) else {
             throw APIError.invalidURL
         }
 
@@ -123,6 +129,10 @@ final class APIClient {
             let encoder = JSONEncoder()
             request.httpBody = try encoder.encode(AnyEncodable(body))
         }
+
+        #if DEBUG
+        print("API request -> \(method) \(request.url?.absoluteString ?? "nil")")
+        #endif
 
         return request
     }
